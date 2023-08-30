@@ -1,3 +1,4 @@
+#! /bin/bash
 # create an example project 
 mkdir example-react-project
 
