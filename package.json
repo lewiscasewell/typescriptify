@@ -1,6 +1,6 @@
 {
-  "name": "typescriptify",
-  "version": "1.0.0",
+  "name": "typesify",
+  "version": "1.0.1",
   "description": "Convert a react project from javascript to typescript",
   "main": "src/index.js",
   "scripts": {
