@@ -1,8 +1,8 @@
 {
   "name": "typesify",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Convert a react project from javascript to typescript",
-  "main": "src/index.js",
+  "main": "typesify/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,7 +17,7 @@
   ],
   "author": "Lewis Casewell",
   "license": "ISC",
-  "bin": "src/index.js",
+  "bin": "typesify/index.js",
   "bugs": {
     "url": "https://github.com/lewiscasewell/typescriptify/issues"
   },

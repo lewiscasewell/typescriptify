@@ -1,5 +1,4 @@
 #! /usr/bin/env node
-
 const readline = require("readline");
 const fs = require("fs");
 const path = require('path');
@@ -24,7 +23,8 @@ function askQuestion(question) {
 
 const { argv } = yargs;
 
-let excludedDirectories = ['node_modules', 'build', 'typescriptify', '.git', 'dist'];
+let excludedDirectories = ['node_modules', 'build', 'typesify', '.git', 'dist'];
+const allowedExtensions = ['.ts', '.tsx'];
 
 if (argv.exclude) {
     const additionalExcluded = argv.exclude.split(',');
@@ -39,6 +39,11 @@ if (argv.exclude) {
     // excludedDirectories = excludedDirectories.concat(argv.exclude.split(','));
 }
 
+const targetDirectory = process.cwd();
+
+
+
+
 async function main() {
   try {
     const answer = await askQuestion(
@@ -47,15 +52,38 @@ async function main() {
     if (answer.toLowerCase() === "y" || answer.toLowerCase() === "yes") {
       console.log("Great! Changing all js and jsx files to ts and tsx files");
 
-      const excludeString = excludedDirectories.map(directory => `-not -path './${directory}/*'`).join(' ');
+      
+      function collectFilesForExtensionChange(directory) {
+        let fileList = [];
+      
+        const entries = fs.readdirSync(directory);
+      
+        entries.forEach(entry => {
+          const entryPath = path.join(directory, entry);
+          const stats = fs.statSync(entryPath);
+          if (stats.isDirectory() && !excludedDirectories.includes(entry)) {
+            const nestedFiles = collectFilesForExtensionChange(entryPath);
+            fileList = fileList.concat(nestedFiles);
+          } else if (stats.isFile()) {
+            fileList.push(entryPath);
+          }
+        });
+        
+        return fileList;
+      }
 
-      // Replace js and jsx files with ts and tsx respectively
-      await exec(
-        `find . -type f -name '*.js' ${excludeString} -exec bash -c 'mv \"$1\" \"\${1%.js}.ts\"' - '{}' \\;`
-      );
-      await exec(
-        "find . -type f -name '*.jsx' -not -path './node_modules/*' -not -path './build/*' -exec bash -c 'mv \"$1\" \"${1%.jsx}.tsx\"' - '{}' \\;"
-      );
+      const allFilesToChange = collectFilesForExtensionChange(targetDirectory);
+      allFilesToChange.forEach(file => {
+          if (path.extname(file) === '.js') {
+              const newFileName = `${path.basename(file, '.js')}.ts`;
+              const newFilePath = path.join(path.dirname(file), newFileName);
+              fs.renameSync(file, newFilePath);
+          } else if (path.extname(file) === '.jsx') {
+              const newFileName = `${path.basename(file, '.jsx')}.tsx`;
+              const newFilePath = path.join(path.dirname(file), newFileName);
+              fs.renameSync(file, newFilePath);
+          }
+      });
 
       const addTsConfig = await askQuestion(
         "Would you like me to add a tsconfig.json file? (y/n): "
@@ -77,12 +105,7 @@ async function main() {
           console.log(
             "Great! Adding // @ts-nocheck to the top of all your files"
           );
-
-          const targetDirectory = process.cwd();
-
-          const allowedExtensions = ['.ts', '.tsx'];
-        
-          function collectFiles(directory) {
+          function collectTsFiles(directory) {
             let fileList = [];
           
             const entries = fs.readdirSync(directory);
@@ -90,28 +113,24 @@ async function main() {
             entries.forEach(entry => {
               const entryPath = path.join(directory, entry);
               const stats = fs.statSync(entryPath);
-          
               if (stats.isDirectory() && !excludedDirectories.includes(entry)) {
-                const nestedFiles = collectFiles(entryPath);
+                const nestedFiles = collectTsFiles(entryPath);
                 fileList = fileList.concat(nestedFiles);
-              } else if (stats.isFile() && allowedExtensions.includes(path.extname(entry))) {
+              } else if (stats.isFile() && allowedExtensions.includes(path.extname(entryPath))) {
                 fileList.push(entryPath);
               }
             });
-          
+            
             return fileList;
           }
-          
-          // Get all files in the target directory and its subdirectories
-          const allFiles = collectFiles(targetDirectory);
-
-            allFiles.forEach(file => {
-                inserter(file).content(
-                    "// @ts-nocheck"
-                ).at(1).then(() => {
-                    console.log(`Added // @ts-nocheck to ${file}`);
-                });
-            });
+          const allTsFiles = collectTsFiles(targetDirectory);
+          allTsFiles.forEach(file => {
+              inserter(file).content(
+                  "// @ts-nocheck"
+              ).at(1).then(() => {
+                  console.log(`Added // @ts-nocheck to ${file}`);
+              });
+          });
         } else {
           console.log("Well then, I hope you have a great day!");
         }
