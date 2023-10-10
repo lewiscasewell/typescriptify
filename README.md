@@ -15,3 +15,6 @@ run `npx typesify --exclude **/node_modules/**,**/dist/**`
 1. Typesify converts all `.js` and `.jsx` files in your project to `.ts` and `.tsx` files respectively.
 2. Typesify adds a `tsconfig.json` file to your project root directory.
 3. Typesify adds `@ts-check` to the top of all `.ts` and `.tsx` files.
+
+## Motivation
+Converting a project at work to typescript, I thought instead of using all of the great packages out there, I would build one myself! It is a good enough starting point to migrate a Javascript React project to Typescript.
